@@ -16,8 +16,6 @@ This repository showcases AWS infrastructure built with Terraform, progressing f
 ---
 
 ## 📂 Structure
-
-
 terraform/
 ├── bootstrap/aws-setup/ # Remote backend (S3 + DynamoDB)
 ├── networking/vpc-basic/ # VPC setup
@@ -39,6 +37,7 @@ terraform/
 
 ---
 
+
 ## 🚀 Usage
 
 ### 1. Setup Backend
@@ -48,10 +47,11 @@ terraform init
 terraform apply
 
 2. Deploy Resources
-cd terraform/<component>
+cd terraform/compute/ec2-server
 terraform init
 terraform apply
 
 👨‍💻 Author
+
 Edwin Kimutai
 Cloud Engineer | DevOps

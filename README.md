@@ -1,5 +1,7 @@
 AWS Infrastructure-as-Code (IaC) Portfolio
+
 Building Scalable, Secure, and Modular Cloud Architecture
+
 This repository serves as a professional showcase of production-grade AWS infrastructure managed via Terraform. It moves beyond basic scripting into high-level architectural patterns, focusing on modularity, high availability, and the DRY (Don't Repeat Yourself) principle.
 
 🏗️ Architecture Overview

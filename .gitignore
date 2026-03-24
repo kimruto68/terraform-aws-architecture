@@ -1,0 +1,24 @@
+# Local .terraform directories (provider binaries and modules)
+**/.terraform/*
+
+# .tfstate files (These contain your infrastructure's "secrets" and IP addresses)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log files
+crash.log
+
+# Ignore variables file containing secrets/credentials
+*.tfvars
+*.tfvars.json
+
+# Ignore local environment files
+.env
+.aws/
+
+# Ignore Mac system files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db

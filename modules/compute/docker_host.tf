@@ -44,17 +44,50 @@ resource "aws_instance" "dockerhost" {
   key_name               = "docker_key"
 
   user_data = <<-EOF
-    #!/bin/bash
-    dnf update -y
-    dnf install -y docker
+#!/bin/bash
 
-    systemctl start docker
-    systemctl enable docker
+# Log everything
+exec > /var/log/user-data.log 2>&1
 
-    usermod -aG docker ec2-user
+# Fail fast
+set -e
 
-    docker run -d -p 80:80 --name nginxserver nginx
-  EOF
+# Update system
+dnf update -y
+
+# Install packages with retry
+for i in {1..3}; do
+  dnf install -y docker git && break
+  echo "Retrying package install..."
+  sleep 5
+done
+
+# Start Docker
+systemctl start docker
+systemctl enable docker
+
+# Wait for network stability
+sleep 10
+
+# Clone repo
+git clone https://github.com/kimruto68/terraform-aws-architecture.git /home/ec2-user/site
+
+# Verify clone
+if [ ! -d "/home/ec2-user/site" ]; then
+  echo "ERROR: Git clone failed"
+  exit 1
+fi
+
+# Clean any existing container
+docker rm -f nginxserver || true
+
+# Run container
+docker run -d -p 80:80 \
+  -v /home/ec2-user/site/modules/aws-devops-portfolio:/usr/share/nginx/html:ro \
+  --name nginxserver \
+  nginx
+
+EOF
 
   tags = {
     Name = "Terraform-Docker-Host"

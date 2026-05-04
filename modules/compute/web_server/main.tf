@@ -1,6 +1,4 @@
-provider "aws" {
-  region = "us-east-1"
-}
+# modules/compute/main.tf
 
 data "aws_ami" "amazon_linux" {
   most_recent = true
@@ -13,7 +11,7 @@ data "aws_ami" "amazon_linux" {
 }
 
 resource "aws_security_group" "web_sg" {
-  name        = "web_sg_portfolio"
+  name        = "${var.environment}-web-sg"
   description = "Allow HTTP and SSH traffic"
 
   ingress {
@@ -42,26 +40,20 @@ resource "aws_security_group" "web_sg" {
 
 resource "aws_instance" "dockerhost" {
   ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro"
+  instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.web_sg.id]
-  key_name               = "docker_key" # Ensure this key exists in us-east-1
+  key_name               = var.key_name
 
-  # Using a heredoc with 'tag' stripping to keep the script clean
   user_data = <<-EOF
               #!/bin/bash
               dnf update -y
               dnf install -y docker
               systemctl enable --now docker
               usermod -aG docker ec2-user
-              docker run -d --restart always -p 80:80 kimruto/portfolio_website:latest
+              docker run -d --restart always -p 80:80 ${var.docker_image}
               EOF
 
   tags = {
-    Name = "Terraform-Docker-Host"
+    Name = "${var.environment}-Docker-Host"
   }
-}
-
-output "website_url" {
-  value       = "http://${aws_instance.dockerhost.public_ip}"
-  description = "The public URL of the portfolio website"
 }

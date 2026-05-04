@@ -13,9 +13,11 @@ data "aws_ami" "amazon_linux" {
 }
 
 resource "aws_security_group" "web_sg" {
-  name = "web_sg"
+  name        = "web_sg_portfolio"
+  description = "Allow HTTP and SSH traffic"
 
   ingress {
+    description = "HTTP from anywhere"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -23,10 +25,11 @@ resource "aws_security_group" "web_sg" {
   }
 
   ingress {
+    description = "SSH from anywhere"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # tighten later
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -41,59 +44,24 @@ resource "aws_instance" "dockerhost" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.web_sg.id]
-  key_name               = "docker_key"
+  key_name               = "docker_key" # Ensure this key exists in us-east-1
 
+  # Using a heredoc with 'tag' stripping to keep the script clean
   user_data = <<-EOF
-#!/bin/bash
-
-# Log everything
-exec > /var/log/user-data.log 2>&1
-
-# Fail fast
-set -e
-
-# Update system
-dnf update -y
-
-# Install packages with retry
-for i in {1..3}; do
-  dnf install -y docker git && break
-  echo "Retrying package install..."
-  sleep 5
-done
-
-# Start Docker
-systemctl start docker
-systemctl enable docker
-
-# Wait for network stability
-sleep 10
-
-# Clone repo
-git clone https://github.com/kimruto68/terraform-aws-architecture.git /home/ec2-user/site
-
-# Verify clone
-if [ ! -d "/home/ec2-user/site" ]; then
-  echo "ERROR: Git clone failed"
-  exit 1
-fi
-
-# Clean any existing container
-docker rm -f nginxserver || true
-
-# Run container
-docker run -d -p 80:80 \
-  -v /home/ec2-user/site/modules/aws-devops-portfolio:/usr/share/nginx/html:ro \
-  --name nginxserver \
-  nginx
-
-EOF
+              #!/bin/bash
+              dnf update -y
+              dnf install -y docker
+              systemctl enable --now docker
+              usermod -aG docker ec2-user
+              docker run -d --restart always -p 80:80 kimruto/portfolio_website:latest
+              EOF
 
   tags = {
     Name = "Terraform-Docker-Host"
   }
 }
 
-output "public_ip" {
-  value = aws_instance.dockerhost.public_ip
+output "website_url" {
+  value       = "http://${aws_instance.dockerhost.public_ip}"
+  description = "The public URL of the portfolio website"
 }

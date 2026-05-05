@@ -14,13 +14,17 @@ terraform-aws-architecture/
 ├── modules/                 # The "Library" (Logic-only, no hardcoded values)
 │   ├── networking/          # VPC, Subnets, NAT Gateways
 │   ├── compute/             # EC2, Auto Scaling, Load Balancers
+│   │     └── docker_server
+│   │     └── web_server
+│   │     └── 
+│   │     └──    
 │   ├── security/            # IAM Roles, Security Groups, KMS
 │   └── storage/             # S3, RDS, EBS
 │
 ├── live/                    # The "Deployments" (Calls the modules)
 │   ├── production/
-│   │   ├── networking/
-│   │   └── web-app/
+│   │   ├── docker_server/
+│   │   └── web_server/
 │   └── staging/
 │       ├── networking/
 │       └── web-app/

@@ -1,62 +1,64 @@
-# ☁️ AWS Infrastructure-as-Code (IaC) Portfolio
+# Dockerized Web Host: Registry-Driven Deployment
 
-## Overview
-This repository showcases AWS infrastructure built with Terraform, progressing from basic resources to scalable, production-ready architecture. It emphasizes modular design, state management, and high availability.
+This project demonstrates the evolution of a professional web deployment workflow. It transitions from a basic "Git-pull" method (building on the server) to a modern **CI/CD-ready pattern** using Docker Hub for image management and Terraform for infrastructure automation.
 
-### The Module Structure
-Inside your modules/ folder, create a specific directory for this compute pattern:
+---
+
+## 🔄 The Evolution: Git vs. Registry
+By moving to a Registry-based workflow, I’ve optimized the pipeline for speed, consistency, and portability.
+
+| Feature | Phase 1: Git-Based | Phase 2: Registry-Based (Current) |
+| :--- | :--- | :--- |
+| **Workflow** | Clone source code on EC2 → Build image on EC2. | Build image locally → Push to Registry → Pull on EC2. |
+| **Speed** | Slower (requires build time on every launch). | Faster (instantly pulls pre-compiled layers). |
+| **Consistency** | Risk of "it worked on my machine but not the server." | Immutable artifacts; the exact same image is used everywhere. |
+| **Scalability** | Hard to manage across multiple instances. | **K8s Ready:** Essential for scaling in clusters. |
+
+---
+
+## 🏗️ Architecture
+1.  **Local Development:** Application code is containerized using a `Dockerfile`.
+2.  **Image Registry:** The image is built, tagged, and pushed to **Docker Hub**.
+3.  **Infrastructure as Code:** **Terraform** provisions the AWS EC2 instance and required Security Groups.
+4.  **Automated Bootstrapping:** 
+    *   The EC2 instance uses `user_data` to install the Docker Engine.
+    *   It automatically pulls the specific image from the registry.
+    *   The container is deployed and mapped to port 80.
+
+---
+
+## 🚀 Deployment Workflow
+
+### 1. Image Preparation
 ```bash
-terraform-aws-architecture/
-│
-├── bootstrap/               # The "Chicken & Egg" folder
-│   └── remote-state/        # S3 + DynamoDB to host the backend for everything else
-│
-├── modules/                 # The "Library" (Logic-only, no hardcoded values)
-│   ├── networking/          # VPC, Subnets, NAT Gateways
-│   ├── compute/             # EC2, Auto Scaling, Load Balancers
-│   │     └── docker_server
-│   │     └── web_server
-│   │     └── 
-│   │     └──    
-│   ├── security/            # IAM Roles, Security Groups, KMS
-│   └── storage/             # S3, RDS, EBS
-│
-├── live/                    # The "Deployments" (Calls the modules)
-│   ├── production/
-│   │   ├── docker_server/
-│   │   └── web_server/
-│   └── staging/
-│       ├── networking/
-│       └── web-app/
-│
-├── policies/                # Service Control Policies or Sentinel/Opa
-├── scripts/                 # Bash/Python helper scripts (e.g., cleanup, health checks)
-├── .gitignore               # Standard Terraform ignores
-└── README.md                # The "Master Documentation"
+# Build the image locally
+docker buildx build --platform linux/amd64 -t kimruto/portfolio_website:latest
+
+# Push to Docker Hub
+docker push kimruto/portfolio_website:latest
 ```
 
-## 🧠 Key Concepts
-
-- **Modularity** → Reusable Terraform modules  
-- **DRY Principle** → No repeated configurations  
-- **State Safety** → Remote backend with locking  
-- **Security** → No secrets in code, controlled access  
-- **High Availability** → Multi-AZ + auto scaling  
+### 2. Infrastructure Launch
+Ensure your AWS credentials are configured, then execute:
 
 
-### 1. Setup Backend
-```bash
-cd terraform/bootstrap/aws-setup
+```Bash
 terraform init
-terraform apply
-```
-### 2. Deploy Resources
-```bash
-cd terraform/Compute/EC2-Server
-terraform init
-terraform apply
+terraform plan
+terraform apply -auto-approve
 ```
 
-### 👨‍💻 Author
-Edwin Kimutai |
-Certified Solution Architect | Cloud Engineer | DevOps | 
+### 🛠️ Tech Stack
+- Terraform: Infrastructure Provisioning.
+- Docker: Containerization and Runtime.
+- Docker Hub: Artifact Storage and Versioning.
+- AWS (EC2/VPC): Cloud Hosting.
+- Bash: Automated Bootstrap Scripting.
+
+### ⏩ Next Steps: The Road to Kubernetes (K8s)
+The current Registry-based model is the final prerequisite for orchestrating workloads with Kubernetes. My next phase involves:
+- Migrating this deployment to a Kubernetes cluster (Minikube/EKS).
+- Implementing Self-healing and Auto-scaling.
+- Managing configurations using K8s Manifests (Deployments and Services).
+
+#### Note: This project is part of a continuous DevOps learning path, moving from manual setups to fully automated cloud-native architectures.
